@@ -117,7 +117,7 @@ And in the `apps/backend/module/article/config/generator.yml` :
 
 Now your backend article list should look like this :
 
-![article list](list.png)
+![article list](http://trac.symfony-project.org/attachment/wiki/y0AdminExpandPlugin/list.png?format=raw)
 
 Next, let's implement `executeListDetails` in `apps/backend/modules/article/actions/actions.class.php` :
 
@@ -144,11 +144,11 @@ And create the related template `apps/backend/modules/article/templates/ListDeta
 
 Now when you click on the "Details" link, it will load the content of ListDetails :
 
-![article loading](loading.png)
+![article loading](http://trac.symfony-project.org/attachment/wiki/y0AdminExpandPlugin/loading.png?format=raw)
 
 And when loaded :
 
-![article loaded](loaded.png)
+![article loaded](http://trac.symfony-project.org/attachment/wiki/y0AdminExpandPlugin/loaded.png?format=raw)
 
 
 Now let's add a toolbox for articles :
@@ -191,7 +191,7 @@ The ListToolboxSuccess.php :
 
 And with a little help from css, you get this result where you can expand/collapse each action :
 
-![article final](final.png)
+![article final](http://trac.symfony-project.org/attachment/wiki/y0AdminExpandPlugin/final.png?format=raw)
 
 
 Under the hood
