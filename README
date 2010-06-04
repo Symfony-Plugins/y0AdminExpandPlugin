@@ -1,0 +1,227 @@
+y0AdminExpandPlugin
+===================
+
+With this plugin, you can insert object_actions response bellow the row of admin tables.
+
+For example, to display long details from an object, or show relationships, or a log.
+
+
+Installation
+------------
+
+You can install this plugin the usual way (RTFM), or if you want to work with the trunk:
+
+    $ cd plugins
+    $ svn co http://svn.symfony-project.com/plugins/y0AdminExpandPlugin/trunk/ y0AdminExpandPlugin
+
+
+Then activate the plugin in the `config/ProjectConfiguration.class.php` file.
+
+
+Next, publish plugin assets with the following command :
+
+    $ symfony plugin:publish-assets y0AdminExpandPlugin
+
+
+Next, enable jQuery 1.4+ somehow in the application, either with the [sfJqueryReloadedPlugin](http://www.symfony-project.org/plugins/sfJqueryReloadedPlugin) or by adding jquery in your `view.yml` javascripts.
+
+
+Then add the y0AdminExpandHelper to the admin application (backend) `settings.yml` :
+
+    [yml]
+    all:
+      standard_helpers:       [Partial, Cache, ..., y0AdminExpand]
+
+When you add the helper to your application, it injects the plugin assets to the application responses.
+
+You can skip the installation of the helper and add yourself the stylesheet and the javascript to `view.yml` :
+
+    [yml]
+    default:
+
+      stylesheets:
+        - /y0AdminExpandPlugin/css/expand.css
+
+      javascripts:
+        - /y0AdminExpandPlugin/js/expand.js
+
+
+Configuration
+-------------
+
+Edit the `generator.yml` from your admin module, and add the "expand" class to the action params :
+
+    [yml]
+    generator:
+      class: sfDoctrineGenerator
+      param:
+        ...
+        config:
+          ...
+          list:
+            ...
+            object_actions:
+              details: {params: {class: expand}}
+
+
+Now when you click on the link in the admin list, it fetch the page via ajax and display it below the row in the list, reclick on the link to hide hit.
+
+
+Real World Example
+------------------
+
+Let's start with an example after you completed the installation instructions.
+
+Imagine you have a doctrine backend for articles defined like this in `config/doctrine/schema.yml` :
+
+    [yml]
+    Article:
+      actAs:
+        Timestampable: ~
+      columns:
+        title: string(200)
+        body: text
+
+And in the `apps/backend/module/article/config/generator.yml` :
+
+    [yml]
+    generator:
+      class: sfDoctrineGenerator
+      param:
+        model_class:           Article
+        theme:                 admin
+        non_verbose_templates: true
+        with_show:             false
+        singular:              ~
+        plural:                ~
+        route_prefix:          article
+        with_doctrine_route:   true
+        actions_base_class:    sfActions
+
+        config:
+          actions: ~
+          fields:  ~
+          list:
+
+            display: [=title, created_at]
+
+            object_actions:
+              details: {params: {class: expand}}
+              _edit: ~
+              _delete: ~
+
+          filter:  ~
+          form:    ~
+          edit:    ~
+          new:     ~
+
+Now your backend article list should look like this :
+
+![article list](list.png)
+
+Next, let's implement `executeListDetails` in `apps/backend/modules/article/actions/actions.class.php` :
+
+    [php]
+    class articleActions extends autoArticleActions
+    {
+      // ...
+
+      public function executeListDetails(sfWebRequest $request)
+      {
+        $this->article = $this->getRoute()->getObject();
+      }
+    }
+
+And create the related template `apps/backend/modules/article/templates/ListDetailsSuccess.php` :
+
+    [php]
+    <dl>
+      <dt>ID</dt>
+      <dd><?php echo $article->id; ?></dd>
+      <dt>Body</dt>
+      <dd><?php echo $article->body; ?></dd>
+    </dl>
+
+Now when you click on the "Details" link, it will load the content of ListDetails :
+
+![article loading](loading.png)
+
+And when loaded :
+
+![article loaded](loaded.png)
+
+
+Now let's add a toolbox for articles :
+
+    [yml]
+    generator:
+      # ...
+      param:
+        # ...
+        config:
+          # ...
+          list:
+            # ...
+            object_actions:
+              details: {params: {class: expand}}
+              toolbox: {params: {class: expand}}
+              _edit: ~
+              _delete: ~
+
+In actions.class.php :
+
+    [php]
+    class articleActions extends autoArticleActions
+    {
+      // ...
+      public function executeListToolbox(sfWebRequest $request)
+      {
+        $this->article = $this->getRoute()->getObject();
+      }
+    }
+
+The ListToolboxSuccess.php :
+
+    [php]
+    <ul>
+      <li><?php echo link_to('Preview', 'article_object', array('id' => $article->id, 'action' => 'preview')); ?></li>
+      <li><?php echo link_to('Archive', 'article_object', array('id' => $article->id, 'action' => 'archive')); ?></li>
+      <li><?php echo link_to('Publish', 'article_object', array('id' => $article->id, 'action' => 'publish')); ?></li>
+    </ul>
+
+And with a little help from css, you get this result where you can expand/collapse each action :
+
+![article final](final.png)
+
+
+Under the hood
+--------------
+
+When you click on a link with expand class, it create a `<tr>` with the same class as the row in the list and adds "expansion" class to it :
+
+    [xml]
+    <tr class="sf_admin_row [odd|even] expansion"></tr>
+
+As the class is copied, the odd/even index is copied as well.
+
+Inside the row, it creates a cell with the same class as the `<li>` of the action and a full colspan :
+
+    [xml]
+    <tr class="sf_admin_row [odd|even] expansion">
+      <td class="sf_admin_action_%key%" colspan="%count%"></td>
+    </tr>
+
+With the previous example, the html created for the first article is :
+
+    [xml]
+    <tr class="sf_admin_row odd expansion">
+      <td class="sf_admin_action_toolbox" colspan="4"></td>
+    </tr>
+
+Then, the target of link is loaded by jQuery.load into the `<td>`.
+
+Notes
+-----
+
+Even if the example use Doctrine, it should work with Propel version.
+

@@ -1,0 +1,19 @@
+/*
+ * y0AdminExpandPlugin
+ */
+
+.expand {
+  background-image: url(../images/expand.png) !important;
+}
+.expand-load {
+  background-image: url(../images/load.gif) !important;
+}
+.expand-open {
+  background-image: url(../images/open.png) !important;
+}
+
+.expand:focus {
+  outline: none;
+}
+
+
